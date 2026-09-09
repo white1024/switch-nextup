@@ -1,0 +1,14 @@
+{
+  "name": "switch-nextup",
+  "version": "0.1.0",
+  "description": "One-click switcher for Claude Code and ChatGPT/Codex accounts, with official usage display",
+  "private": true,
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.1.0"
+  }
+}

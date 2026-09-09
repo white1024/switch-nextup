@@ -1,0 +1,631 @@
+:root {
+  --bg-solid: #1a1714;
+  --panel-solid: #262019;
+  --panel: rgba(38, 32, 25, 0.85);
+  --panel-2: rgba(58, 50, 40, 0.9);
+  --text: #f3ece2;
+  --muted: #c2b6a4;
+  --accent: #d97757;
+  --accent-dim: #7a4233;
+  --green: #5fb87a;
+  --yellow: #e0b54a;
+  --red: #e06a5a;
+  --border: rgba(240, 232, 220, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: transparent; /* let the window glass effect show through */
+  color: var(--text);
+  font-size: 14px;
+  -webkit-user-select: none;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+/* "none" effect = solid opaque background */
+body[data-effect="none"] {
+  background: var(--bg-solid);
+}
+
+/* ---------- custom (frameless) titlebar ---------- */
+#titlebar {
+  flex: none;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+.app-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+/* DEV: backdrop mode indicator — remove before release */
+.effect-label {
+  margin-left: 10px;
+  margin-right: auto;
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+.win-controls {
+  display: flex;
+  gap: 2px;
+}
+.win-btn {
+  width: 30px;
+  height: 28px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.win-btn:hover {
+  background: var(--panel-2);
+  color: var(--text);
+}
+.win-btn.close:hover {
+  background: var(--red);
+  color: #fff;
+}
+/* pin / always-on-top toggle: native Segoe MDL2 pin glyph (monochrome) */
+.win-btn.pin::before {
+  font-family: "Segoe MDL2 Assets";
+  content: "\E718"; /* Pin */
+  font-size: 13px;
+}
+.win-btn.pin.active {
+  color: var(--accent);
+}
+.win-btn.pin.active::before {
+  content: "\E840"; /* Pinned (filled) */
+}
+/* Refresh cooldown: tint the ⟳ glyph accent for the ~2s cooldown — a resting
+   colour change (grey → warm accent) that confirms the fetch fired and shows it's
+   briefly inert. A hover during it stays accent (no lightup) with a not-allowed
+   cursor so a re-click clearly reads as "not yet". */
+.win-btn.cooling,
+.win-btn.cooling:hover {
+  color: var(--accent);
+  background: none;
+  cursor: not-allowed;
+}
+/* compact-mode toggle: same glyph both ways, tinted accent while active */
+.win-btn.compact::before {
+  content: "⬍";
+  font-size: 14px;
+}
+.win-btn.compact.active {
+  color: var(--accent);
+}
+
+/* ---------- provider tabs (Claude / ChatGPT) ---------- */
+.tabs {
+  flex: none;
+  display: flex;
+  gap: 4px;
+  padding: 8px 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+.tab-btn {
+  flex: 1;
+  padding: 8px 4px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tab-btn:hover {
+  color: var(--text);
+}
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ---------- compact mode: hide the list/footer, show one usage strip ---------- */
+body[data-compact="true"] .accounts,
+body[data-compact="true"] #tabs,
+body[data-compact="true"] footer {
+  display: none;
+}
+/* The compact bar's fixed height has no room for the full banner below the
+   titlebar — it would just get clipped by the window's own bounds instead of
+   scrolling. main.js surfaces the same warning as a chip inside
+   #compact-usage instead (.compact-warn below). */
+body[data-compact="true"] #credman-warning {
+  display: none;
+}
+.compact-warn {
+  flex: none;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--yellow);
+}
+/* Container for one row per provider that has an active account (Claude
+   and/or ChatGPT) — the window itself is resized to fit however many rows
+   there are (see set_compact / resizeCompactWindow in main.js). */
+.compact-usage {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+}
+.compact-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 46px;
+  padding: 0 16px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.compact-row + .compact-row {
+  border-top: 1px solid var(--border);
+}
+/* Disambiguates rows when a Claude and a ChatGPT account share a name —
+   without this, "work" / "work" on two rows would be indistinguishable. */
+.compact-row .compact-provider {
+  flex: none;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  background: var(--panel-2);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.compact-row .compact-name {
+  flex: none;
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--accent);
+}
+.compact-row .compact-empty {
+  flex: none;
+  font-size: 12px;
+  color: var(--muted);
+}
+.compact-meter {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.compact-meter .compact-label {
+  /* Short forms are used for known buckets (see COMPACT_LABELS in main.js);
+     this cap is only a safety net for the rare unmapped label, so it stays
+     wide enough not to bite normal ones. */
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--muted);
+}
+.compact-meter .compact-bar {
+  flex: none;
+  width: 44px;
+  height: 6px;
+  background: var(--panel-2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.compact-meter .compact-bar .fill {
+  /* Without this, width has no effect on a <span> (non-replaced inline
+     element) unless its parent is a flex/grid container — .compact-bar
+     isn't one, so the fill silently collapsed to zero width. */
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+}
+.compact-meter .compact-pct {
+  flex: none;
+  font-size: 11px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- account list (the only scrolling region) ---------- */
+.accounts {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.accounts::-webkit-scrollbar {
+  width: 8px;
+}
+.accounts::-webkit-scrollbar-thumb {
+  background: var(--panel-2);
+  border-radius: 4px;
+}
+
+.empty {
+  color: var(--muted);
+  text-align: center;
+  padding: 30px 10px;
+  line-height: 1.6;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+}
+.card.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-dim) inset;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.card-head .name {
+  font-weight: 600;
+  font-size: 15px;
+}
+.badge {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: var(--panel-2);
+  color: var(--muted);
+  text-transform: capitalize;
+}
+.card-head .spacer {
+  flex: 1;
+}
+.card-actions button {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 7px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.card-actions button:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+/* One control per card, first in .card-actions (left of Rename): a clickable
+   accent "Switch" on non-active cards, a filled non-clickable "Active" on the
+   current one — replaces the old separate Active badge. */
+.card-actions .switch-act {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+.card-actions .switch-act:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1a1714;
+}
+.card-actions .switch-act.active,
+.card-actions .switch-act.active:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1a1714;
+  cursor: default;
+}
+
+.meters {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.meter .meter-label {
+  display: flex;
+  align-items: flex-start;
+  /* A fixed gap (not just space-between) so a long label that wraps onto
+     multiple lines still keeps a visible gap from the % on its last line,
+     instead of running right up against it. */
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.meter .meter-label span:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.meter .meter-label .pct {
+  flex: none;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.bar {
+  height: 7px;
+  background: var(--panel-2);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.bar .fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+.usage-note {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+.usage-note.err {
+  color: var(--red);
+}
+.relogin-btn {
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--red);
+  background: transparent;
+  color: var(--red);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.relogin-btn:hover {
+  background: var(--red);
+  color: #1a1714;
+}
+
+/* ---------- footer ---------- */
+footer {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--border);
+  background: rgba(26, 23, 20, 0.5);
+}
+.footer-row {
+  display: flex;
+  gap: 8px;
+}
+button.primary {
+  flex: 1;
+  padding: 10px;
+  border-radius: 9px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+button.primary:hover {
+  background: var(--accent);
+  color: #1a1714;
+}
+/* Muted, low-emphasis destructive action — reddens only on hover. */
+button.ghost-danger {
+  flex: none;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 12.5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+button.ghost-danger:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+.error {
+  margin: 12px 16px 0;
+  padding: 10px 12px;
+  background: rgba(58, 34, 30, 0.9);
+  border: 1px solid var(--red);
+  border-radius: 8px;
+  color: #f0c4bc;
+  font-size: 12.5px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.error #error-msg {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.error-dismiss {
+  flex: none;
+  border: none;
+  background: none;
+  color: #f0c4bc;
+  opacity: 0.7;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+}
+.error-dismiss:hover {
+  opacity: 1;
+}
+/* Persistent (not auto-dismissed) — unlike #error, stays until the underlying
+   condition (Credential Manager sign-in mode) itself clears. */
+.warning-banner {
+  margin: 12px 16px 0;
+  padding: 10px 12px;
+  background: rgba(58, 46, 20, 0.9);
+  border: 1px solid var(--yellow);
+  border-radius: 8px;
+  color: #f0dcae;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+.hidden {
+  display: none !important;
+}
+
+/* ---------- transient toast (e.g. post-switch restart reminder) ---------- */
+.toast {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 60;
+  padding: 10px 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--accent);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12.5px;
+  line-height: 1.4;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  transition: opacity 0.2s ease;
+}
+.toast.fade {
+  opacity: 0;
+}
+.toast strong {
+  color: var(--accent);
+}
+.toast-msg {
+  margin-bottom: 8px;
+}
+.toast-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.toast-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.toast-btn:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+/* ---------- in-app modal (replaces native prompt/confirm) ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal {
+  width: 300px;
+  max-width: 100%;
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
+}
+.modal-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.modal-input {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--bg-solid);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+.modal-input:focus {
+  border-color: var(--accent);
+}
+.modal-message {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0;
+}
+/* Stacked action buttons for a "choice" modal (clear-data scopes). */
+.modal-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+.modal-btn.choice {
+  width: 100%;
+  text-align: center;
+  padding: 9px 12px;
+}
+.modal-btn.danger {
+  border-color: rgba(224, 106, 90, 0.5);
+  color: #f0c4bc;
+}
+.modal-btn.danger:hover {
+  background: rgba(58, 34, 30, 0.9);
+  border-color: var(--red);
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+.modal-btn {
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+}
+.modal-btn:hover {
+  background: var(--panel-2);
+}
+.modal-btn.ok {
+  background: var(--accent);
+  color: #1a1714;
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.modal-btn.ok:hover {
+  filter: brightness(1.08);
+  background: var(--accent);
+}

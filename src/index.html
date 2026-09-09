@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Switch NextUp</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-effect="acrylic">
+    <div id="titlebar" data-tauri-drag-region>
+      <span class="app-title" data-tauri-drag-region>Switch NextUp</span>
+      <!-- DEV: current backdrop mode indicator — remove before release -->
+      <span id="effect-label" class="effect-label" data-tauri-drag-region></span>
+      <div class="win-controls">
+        <button id="pin-btn" class="win-btn pin" title="Keep on top"></button>
+        <button id="effect-btn" class="win-btn" title="Toggle glass effect">◐</button>
+        <button id="refresh-btn" class="win-btn" title="Refresh usage">⟳</button>
+        <button id="compact-btn" class="win-btn compact" title="Collapse to compact bar"></button>
+        <button id="close-btn" class="win-btn close" title="Hide to tray">✕</button>
+      </div>
+    </div>
+
+    <div id="tabs" class="tabs">
+      <button class="tab-btn" data-provider="claude">Claude</button>
+      <button class="tab-btn" data-provider="chatgpt">ChatGPT</button>
+    </div>
+
+    <div id="compact-usage" class="compact-usage hidden"></div>
+    <div id="credman-warning" class="warning-banner hidden">
+      ⚠ Windows Credential Manager sign-in mode looks active for Claude Code — switching
+      accounts here may not take effect.
+    </div>
+    <div id="error" class="error hidden">
+      <span id="error-msg"></span>
+      <button id="error-dismiss" class="error-dismiss" title="Dismiss">✕</button>
+    </div>
+    <div id="toast" class="toast hidden"></div>
+
+    <main id="accounts" class="accounts">
+      <div class="empty">Loading…</div>
+    </main>
+
+    <footer>
+      <div class="footer-row">
+        <button id="add-btn" class="primary" title="Capture the account currently logged into Claude Code">+ Save current account</button>
+        <button id="login-btn" class="primary" title="Log into a Claude account in your browser, right from here">+ Add account</button>
+      </div>
+      <button id="clear-btn" class="ghost-danger" title="Clear Switch NextUp's saved data (does not log you out of Claude Code)">Clear data…</button>
+    </footer>
+
+    <!-- Themed in-app dialog (replaces native prompt/confirm) -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-title" id="modal-title"></div>
+        <input id="modal-input" class="modal-input" type="text" autocomplete="off" spellcheck="false" />
+        <p class="modal-message hidden" id="modal-message"></p>
+        <div class="modal-choices hidden" id="modal-choices"></div>
+        <div class="modal-actions">
+          <button id="modal-cancel" class="modal-btn">Cancel</button>
+          <button id="modal-ok" class="modal-btn ok">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="main.js"></script>
+  </body>
+</html>
